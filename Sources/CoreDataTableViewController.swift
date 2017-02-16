@@ -82,16 +82,24 @@ open class CoreDataTableViewController: UITableViewController, NSFetchedResultsC
         }
         set (newValue) {
             if newValue == true {
-                _suspendAutomaticTrackingOfChangesInManagedObjectContext = true
+                if flagCount == 0 {
+                    _suspendAutomaticTrackingOfChangesInManagedObjectContext = true
+                }
+                flagCount += 1
             } else {
-                DispatchQueue.main.asyncAfter(deadline: .now()) {
-                    self._suspendAutomaticTrackingOfChangesInManagedObjectContext = false
+                flagCount -= 1
+                DispatchQueue.main.asyncAfter(deadline: .now()) { [weak self] in
+                    guard let s = self else {return}
+                    if s.flagCount == 0 {
+                        s._suspendAutomaticTrackingOfChangesInManagedObjectContext = false
+                    }
                 }
             }
         }
     }
     
     fileprivate var _suspendAutomaticTrackingOfChangesInManagedObjectContext: Bool = false
+    fileprivate var flagCount:UInt = 0
     fileprivate var beganUpdates: Bool = false
     
     // MARK: - API
